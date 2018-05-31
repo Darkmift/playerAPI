@@ -13,6 +13,9 @@ class HomeController extends Controller
     public function getAll($request, $response)
     {
         $playlists = Playlist::select('id', 'name', 'image')->get();
+        if (count($playlists) < 1 || !is_numeric($id)) {
+            return $this->responseMaker($response, $this->dbToJsonBuild($playlists, "there are playlists in DB"), 200);
+        }
         return $this->responseMaker($response, $this->dbToJsonBuild($playlists, ''), 200);
     }
 
