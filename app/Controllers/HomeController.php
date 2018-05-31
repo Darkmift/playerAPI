@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Models\Playlist;
+use App\PostValidate;
 
 class HomeController extends Controller
 {
@@ -65,6 +66,16 @@ class HomeController extends Controller
                 400
             );
         }
+
+        ///
+        // var_dump(
+        //     PostValidate::validateName($postJson['name']),
+        //     PostValidate::validateImage($postJson['image']),
+        //     PostValidate::validateSongList($postJson['songs'])
+        // );
+        // die();
+        ///
+
         //init errMsg array
         $errMsg = array();
         //validate playlist name
