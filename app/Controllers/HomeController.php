@@ -5,11 +5,13 @@ use App\Models\Playlist;
 
 class HomeController extends Controller
 {
+    //get API
     public function api($request, $response)
     {
-        return $this->responseMaker($response, $this->APIRules, 201);
+        return $this->responseMaker($response, $this->APIRules, 200);
     }
 
+    //get All
     public function getAll($request, $response)
     {
         $playlists = Playlist::select('id', 'name', 'image')->get();
@@ -19,6 +21,7 @@ class HomeController extends Controller
         return $this->responseMaker($response, $this->dbToJsonBuild($playlists, ''), 200);
     }
 
+    //get one playlist
     public function getOne($request, $response, $args)
     {
         $id = $args['id'];
@@ -29,6 +32,7 @@ class HomeController extends Controller
         return $this->responseMaker($response, $this->dbToJsonBuild($this->objBuilder($singlePlaylist), ''), 200);
     }
 
+    //get all songs of playlist
     public function playlistSongsAll($request, $response, $args)
     {
         $id = $args['id'];
@@ -48,6 +52,73 @@ class HomeController extends Controller
         return $this->responseMaker($response, $this->dbToJsonBuild($this->objBuilder($songs), ''), 200);
     }
 
+    //make a playlist
+    public function createPlaylist($request, $response)
+    {
+        //get post json
+        $postJson = $request->getParsedBody();
+        //if post not valid json
+        if ($postJson === null) {
+            return $this->responseMaker(
+                $response,
+                json_encode(array("error" => "the post request for new playlist requires a proper JSON object,please visit $this->fullUrl./api for guidlines")),
+                400
+            );
+        }
+        //init errMsg array
+        $errMsg = array();
+        //validate playlist name
+        if (!isset($postJson['name'])) {
+            array_push($errMsg, array("playlist name is required!"));
+        } else {
+            if (!filter_var($postJson['name'], FILTER_VALIDATE_URL)) {
+                array_push($errMsg, array("playlist name must be a valid url!"));
+            }
+        }
+        //validate playlist image
+        if (!isset($postJson['image'])) {
+            array_push($errMsg, array("playlist image is required!"));
+        }
+        //validate playlist image
+        if (!isset($postJson['songs'])) {
+            array_push($errMsg, array("playlist songs array is required!"));
+        } else {
+            if (!is_array($postJson['songs'])) {
+                array_push($errMsg, array("playlist songs must be a valid array!"));
+            } else {
+                //validate songs array structure
+                $songs = $postJson['songs'];
+                foreach ($songs as $key => $value) {
+                    $song = $songs[$key];
+                    if (
+                        count($song) != 2 ||
+                        !isset($song['name']) ||
+                        !isset($song['url']) ||
+                        !filter_var($song['url'], FILTER_VALIDATE_URL)
+                    ) {
+                        return $this->responseMaker(
+                            $response,
+                            json_encode(array("error" => "each song must be an array of name:string and url:valid url ,for more info please visit $this->fullUrl./api for guidlines")),
+                            400
+                        );
+                    };
+                }
+            }
+        }
+
+        if (!empty($errMsg)) {
+            return $this->responseMaker(
+                $response,
+                json_encode($errMsg),
+                400
+            );
+        }
+        var_dump($postJson);
+        die();
+        return $this->responseMaker($response, $this->dbToJsonBuild($this->objBuilder($postParam), ''), 201);
+    }
+
+    //helper functions
     private function responseMaker($response, $content, $status)
     {
         $response = $response->withHeader('Content-type', 'application/json');
@@ -61,11 +132,12 @@ class HomeController extends Controller
     {
         $output = new \stdClass();
         $output->success = true;
-
+        var_dump(strlen($notice));
+        die();
         if ($dbOBJ === 'false') {
             $dbOBJ = false;
         }
-        if ($notice != '') {
+        if (strlen($notice) > 1) {
             $output->notice = $notice;
         }
         $output->notice = $notice;

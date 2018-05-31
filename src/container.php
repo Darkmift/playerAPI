@@ -56,3 +56,19 @@ $container['APIRules'] = function ($container) {
     include 'apirules.php';
     return json_encode($instructions, JSON_PRETTY_PRINT);
 };
+
+$container['fullUrl'] = function ($container) {
+    //
+    // $uri = $request->getUri();
+    // $baseUrl = $uri->getBaseUrl();
+    // $path = $uri->getPath();
+    // $query = $uri->getQuery();
+    // $pathFixed = ($path && ($path[0] !== '/')) ? ('/' . $path) : ($path);
+    // $queryFixed = ($query) ? ('?' . $query) : ($query);
+    // $fullUrl = $baseUrl;
+    // . $pathFixed;
+    // . $queryFixed;
+    $uri = $container->request->getUri();
+    $baseUrl = $uri->getBaseUrl();
+    return $baseUrl;
+};

@@ -18,7 +18,6 @@ $app = new \Slim\App([
             'prefix' => '',
         ],
     ],
-
 ]);
 
 require __DIR__ . '../../src/container.php';
