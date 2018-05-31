@@ -2,10 +2,10 @@
 -- version 4.8.0.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: May 31, 2018 at 04:34 AM
--- Server version: 10.1.28-MariaDB
--- PHP Version: 7.1.10
+-- Host: 127.0.0.1
+-- Generation Time: May 31, 2018 at 10:56 PM
+-- Server version: 10.1.32-MariaDB
+-- PHP Version: 7.2.5
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -44,7 +44,9 @@ INSERT INTO `playlists` (`id`, `name`, `image`, `songs`) VALUES
 (2, 'pl 2 no songs', 'pl.url', '[{\"name\":\"song1-1\",\"url\":\"song1-1.com\"}]'),
 (3, 'pl 3 no songs', 'pl.url', '[{\"name\":\"song1-1\",\"url\":\"song1-1.com\"}]'),
 (4, 'pl 3 no songs', 'pl.url', '[{\"name\":\"song1-1\",\"url\":\"song1-1.com\"}]'),
-(5, 'pl 3 no songs', 'pl.url', '');
+(5, 'pl 3 no songs', 'pl.url', ''),
+(6, 'https://www.w3schools.com', 'str', '[{\"name\":\"sltring\",\"url\":\"https:\\/\\/www.w3schools.com\"},{\"name\":\"string\",\"url\":\"https:\\/\\/www.w3schools.com\"}]'),
+(7, 'listymclistface', 'https://www.w3schools.com', '[{\"name\":\"sltring\",\"url\":\"https:\\/\\/www.w3schools.com\"},{\"name\":\"string\",\"url\":\"https:\\/\\/www.w3schools.com\"}]');
 
 --
 -- Indexes for dumped tables
@@ -64,7 +66,7 @@ ALTER TABLE `playlists`
 -- AUTO_INCREMENT for table `playlists`
 --
 ALTER TABLE `playlists`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
