@@ -8,6 +8,7 @@ class PostValidate
     private static $image;
     private static $songsList;
     private static $song;
+    private static $errMsg = array();
 
     public static function validateName($name)
     {
@@ -17,14 +18,26 @@ class PostValidate
 
     public function validateImage($image)
     {
-        self::$image = $image;
-        return self::$image;
+        if (!filter_var($image, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+        return true;
     }
 
     public function validateSongList($songsList)
     {
-        self::$songsList = $songsList;
-        return self::$songsList;
+        foreach ($songsList as $key => $value) {
+            $song = $songsList[$key];
+            if (
+                count($song) != 2 ||
+                !isset($song['name']) ||
+                !isset($song['url']) ||
+                !filter_var($song['url'], FILTER_VALIDATE_URL)
+            ) {
+                return false;
+            };
+        }
+        return true;
     }
 
     public function validateSong($song)
@@ -32,4 +45,17 @@ class PostValidate
         self::$song = $song;
         return self::$song;
     }
+
+    public function errorMsgAdd($addMsg)
+    {
+        array_push(self::$errMsg, array($addMsg));
+    }
+
+    public function errorMsgBuilder()
+    {
+        if (!empty(self::$errMsg)) {
+            return self::$errMsg;
+        }
+    }
+
 }

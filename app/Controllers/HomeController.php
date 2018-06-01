@@ -17,9 +17,9 @@ class HomeController extends Controller
     {
         $playlists = Playlist::select('id', 'name', 'image')->get();
         if (count($playlists) < 1) {
-            return $this->responseMaker($response, $this->dbToJsonBuild($playlists, "there are no playlists in DB"), 200);
+            return $this->responseMaker($response, $this->dbToJsonBuild(true, $playlists, "there are no playlists in DB"), 200);
         }
-        return $this->responseMaker($response, $this->dbToJsonBuild($playlists, 'huh?'), 200);
+        return $this->responseMaker($response, $this->dbToJsonBuild(true, $playlists, 'huh?'), 200);
     }
 
     //get one playlist
@@ -28,9 +28,9 @@ class HomeController extends Controller
         $id = $args['id'];
         $singlePlaylist = Playlist::select('id', 'name', 'image')->where('id', $id)->get();
         if (count($singlePlaylist) < 1 || !is_numeric($id)) {
-            return $this->responseMaker($response, $this->dbToJsonBuild('false', "id($id) not found in DB"), 400);
+            return $this->responseMaker($response, $this->dbToJsonBuild(false, 'false', "id($id) not found in DB"), 400);
         }
-        return $this->responseMaker($response, $this->dbToJsonBuild($this->objBuilder($singlePlaylist), ''), 200);
+        return $this->responseMaker($response, $this->dbToJsonBuild(true, $this->objBuilder($singlePlaylist), ''), 200);
     }
 
     //get all songs of playlist
@@ -43,14 +43,14 @@ class HomeController extends Controller
 
         if (count($songs) < 1 || !is_numeric($id)) {
             if (!Playlist::where('id', $id)->exists()) {
-                return $this->responseMaker($response, $this->dbToJsonBuild($object, "playlist with id($id) does not exists"), 400);
+                return $this->responseMaker($response, $this->dbToJsonBuild(false, $object, "playlist with id($id) does not exists"), 400);
             }
         }
 
         if ($songs->toArray()['0']['songs'] == "") {
-            return $this->responseMaker($response, $this->dbToJsonBuild($object, "songs list for playlist with id($id) is empty"), 200);
+            return $this->responseMaker($response, $this->dbToJsonBuild(false, $object, "songs list for playlist with id($id) is empty"), 200);
         }
-        return $this->responseMaker($response, $this->dbToJsonBuild($this->objBuilder($songs), ''), 200);
+        return $this->responseMaker($response, $this->dbToJsonBuild(true, $this->objBuilder($songs), ''), 200);
     }
 
     //make a playlist
@@ -60,83 +60,91 @@ class HomeController extends Controller
         $postJson = $request->getParsedBody();
         //if post not valid json
         if ($postJson === null) {
+            PostValidate::errorMsgAdd("the post request for new playlist requires a proper JSON object");
+            PostValidate::errorMsgAdd("please consult the API guidlines here: $this->fullUrl./api");
             return $this->responseMaker(
                 $response,
-                json_encode(array("error" => "the post request for new playlist requires a proper JSON object,please visit $this->fullUrl./api for guidlines")),
+                json_encode(PostValidate::errorMsgBuilder()),
                 400
             );
         }
 
-        ///
-        // var_dump(
-        //     PostValidate::validateName($postJson['name']),
-        //     PostValidate::validateImage($postJson['image']),
-        //     PostValidate::validateSongList($postJson['songs'])
-        // );
-        // die();
-        ///
+        if (count($postJson) != 3) {
+            PostValidate::errorMsgAdd("incorrect request object length");
+        }
 
-        //init errMsg array
-        $errMsg = array();
         //validate playlist name
         if (!isset($postJson['name'])) {
-            array_push($errMsg, array("playlist name is required!"));
+            PostValidate::errorMsgAdd("request obj is missing name key!");
         }
+
         //validate playlist image
         if (!isset($postJson['image'])) {
-            array_push($errMsg, array("playlist image is required!"));
+            PostValidate::errorMsgAdd("request obj is missing image key!");
         } else {
-            if (!filter_var($postJson['image'], FILTER_VALIDATE_URL)) {
-                array_push($errMsg, array("playlist image must be a valid url!"));
+            if (!PostValidate::validateImage($postJson['image'])) {
+                PostValidate::errorMsgAdd("playlist image must be a valid url!");
             }
         }
+        //die('image stop');
         //validate playlist songs
         if (!isset($postJson['songs'])) {
-            array_push($errMsg, array("playlist songs array is required!"));
+            PostValidate::errorMsgAdd("request obj is missing songs key!");
         } else {
             if (!is_array($postJson['songs'])) {
-                array_push($errMsg, array("playlist songs must be a valid array!"));
+                PostValidate::errorMsgAdd("playlist songs must be a valid array!");
             } else {
                 //validate songs array structure
                 $songs = $postJson['songs'];
-                foreach ($songs as $key => $value) {
-                    $song = $songs[$key];
-                    if (
-                        count($song) != 2 ||
-                        !isset($song['name']) ||
-                        !isset($song['url']) ||
-                        !filter_var($song['url'], FILTER_VALIDATE_URL)
-                    ) {
-                        array_push($errMsg, array("each song must be an array of name:string and url:valid url"));
-                    };
+                if (!PostValidate::validateSongList($postJson['songs'])) {
+                    PostValidate::errorMsgAdd("each song must be an array of object{name:string and url:valid url}");
                 }
             }
         }
-
+        //check duplicate song/url pair
         if (
             count($postJson['songs']) !=
             count(array_unique($postJson['songs'], SORT_REGULAR))
         ) {
-            array_push($errMsg, array("two or more duplicate songs detected,change either name or url"));
+            PostValidate::errorMsgAdd("two or more duplicate songs detected,change either name or url");
         }
-        //graveyard chunk 1
-        if (!empty($errMsg)) {
-            array_push($errMsg, array("for more info please visit $this->fullUrl./api for guidlines"));
+
+        if (!empty(PostValidate::errorMsgBuilder())) {
+            PostValidate::errorMsgAdd("please consult the API guidlines here: $this->fullUrl./api");
             return $this->responseMaker(
                 $response,
-                json_encode($errMsg),
+                json_encode(PostValidate::errorMsgBuilder()),
                 400
             );
         }
 
-        $playlist = Playlist::create([
-            'name' => $postJson['name'],
-            'image' => $postJson['image'],
-            'songs' => $postJson['songs'],
-        ]);
-        var_dump($playlist->id);
-        die();
-        return $this->responseMaker($response, $this->dbToJsonBuild($this->objBuilder($postParam), ''), 201);
+        //graveyard chunk 1
+
+        try {
+            $playlist = Playlist::create([
+                'name' => $postJson['name'],
+                'image' => $postJson['image'],
+                'songs' => $postJson['songs'],
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            $errorCode = $e->errorInfo[1];
+            if ($errorCode == 1062) {
+                PostValidate::errorMsgAdd("error 1062,the playlist name is already assigned in DB to another playlist");
+                PostValidate::errorMsgAdd("please consult the API guidlines here: $this->fullUrl./api");
+                return $this->responseMaker(
+                    $response,
+                    $this->dbToJsonBuild(false, PostValidate::errorMsgBuilder(), ''),
+                    400
+                );
+            } else {
+                return $this->responseMaker(
+                    $response,
+                    $this->dbToJsonBuild(false, $e, ''),
+                    400
+                );
+            }
+        }
+        return $this->responseMaker($response, $this->dbToJsonBuild(true, $playlist->id, ''), 201);
     }
 
     //helper functions
@@ -149,17 +157,16 @@ class HomeController extends Controller
         return $response;
     }
 
-    private function dbToJsonBuild($dbOBJ, $notice)
+    private function dbToJsonBuild($successState, $dbOBJ, $notice)
     {
         $output = new \stdClass();
-        $output->success = true;
+        $output->success = $successState;
         if ($dbOBJ === 'false') {
             $dbOBJ = false;
         }
-        if (strlen($notice) > 1) {
+        if ($notice != '') {
             $output->notice = $notice;
         }
-        $output->notice = $notice;
         $output->data = $dbOBJ;
         return json_encode($output);
     }
