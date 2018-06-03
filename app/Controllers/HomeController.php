@@ -19,7 +19,7 @@ class HomeController extends Controller
         if (count($playlists) < 1) {
             return $this->responseMaker($response, $this->dbToJsonBuild(true, $playlists, "there are no playlists in DB"), 200);
         }
-        return $this->responseMaker($response, $this->dbToJsonBuild(true, $playlists, 'huh?'), 200);
+        return $this->responseMaker($response, $this->dbToJsonBuild(true, $playlists, ''), 200);
     }
 
     //get one playlist
