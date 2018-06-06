@@ -36,15 +36,16 @@ $container['view'] = function ($container) {
 };
 
 //Override the default Not Found Handler
-$container['notFoundHandler'] = function ($c) {
-    return function ($request, $response) use ($c) {
-        return $response->withStatus(302)->withHeader('Location', '/playlist/api/');
+$container['notFoundHandler'] = function ($container) {
+    return function ($request, $response) use ($container) {
+        // die($container->fullUrl);
+        return $response->withStatus(302)->withHeader('Location', $container->fullUrl . '/api/');
     };
 };
 
 $container['notAllowedHandler'] = function ($container) {
     return function ($request, $response, $methods) use ($container) {
-        return $response->withStatus(302)->withHeader('Location', '/playlist/api/');
+        return $response->withStatus(302)->withHeader('Location', $container->fullUrl . '/api/');
     };
 };
 
